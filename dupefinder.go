@@ -2,41 +2,67 @@ package main
 
 import (
 	"fmt"
-	// "os"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+var (
+	app				= kingpin.New("dupefinder", "Find duplicate files with checksums.")
+	verbose		= app.Flag("verbose", "Enable verbose mode.").Short('v').Bool()
+	debug			= app.Flag("debug", "Enable debug mode.").Short('d').Bool()
+	rec				= app.Flag("recursive", "Search recursively.").Short('r').Bool()
+	output		= app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.log").String()
+	target		= app.Arg("target", "Where to look for duplicate files.").Default(".").String()
+)
+
 func main() {
+	app.Version("0.0.1")
 
-	app	:= kingpin.New("dupefinder", "Find duplicate files with checksums.")
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	config := configureApp(app)
+	if *debug == true {
+		conf := `== DEBUG CONF ==
+Verbose:		%t
+Debug:			%t
+Recursive:		%t
+Output:			%s
+Target:			%s
 
-	if *target != "" {
-		fmt.Printf("Such wows.")
-	} else {
-		fmt.Printf("Such nopes.")
+`
+		fmt.Printf(conf, *verbose, *debug, *rec, *output, *target)
 	}
-
+	find_dupes()
 }
 
-func configureApp(app *kingpin.Application) {
-		verbose		:= app.Flag("verbose", "Enable verbose mode.").Short('v').Bool()
-		debug			:= app.Flag("debug", "Enable debug mode.").Short('d').Bool()
-		rec				:= app.Flag("recursive", "Search recursively.").Short('r').Bool()
-		output		:= app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.log").String()
-		target		:= app.Arg("target", "Where to look for duplicate files.").Default(".").String()
-		app.Version("0.0.1")
-
-		type Config struct {
-			verbose *bool
-			debug 	*bool
-			rec			*bool
-			output	*string
-			target	*string
+func find_dupes() {
+	if *rec == true {
+		err := filepath.Walk(*target, visit)
+		fmt.Printf("filepath.Walk() returned %v\n", err)
+	} else {
+		files, err := ioutil.ReadDir(*target)
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		config := Config{verbose, debug, rec, output, target}
+		for _, file := range files {
+			fmt.Println(file.Name())
+		}
+	}
+}
 
-		return config
+// func isDir(pth string) (bool, error) {
+// 	fi, err := os.Stat(pth)
+// 	if err != nil {
+// 		return false, err
+// 	}
+
+// 	return fi.Mode.IsDir(), nil
+// }
+
+func visit(path string, f os.FileInfo, err error) error {
+  fmt.Printf("Visited: %s\n", path)
+  return nil
 }
