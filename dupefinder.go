@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -54,7 +56,9 @@ func find_dupes() {
 
 		for _, file := range files {
 			if !file.IsDir() {
-				if *verbose { fmt.Println(abs_path + "/" + file.Name()) }
+				fullpath := abs_path + "/" + file.Name()
+				md5, _ := ComputeMd5(fullpath)
+				if *verbose { fmt.Printf("%s [ %x ]\n", fullpath, md5) }
 			} else {
 				if *verbose { fmt.Printf("%s is a directory\n", abs_path + "/" + file.Name()) }
 			}
@@ -71,7 +75,24 @@ func isDirectory(path string) (bool, error) {
 func visit(path string, f os.FileInfo, err error) error {
 	isDir,_ := isDirectory(path)
 	if !isDir && *verbose {
-	  fmt.Printf("%s\n", path)
+		md5, _ := ComputeMd5(path)
+	  fmt.Printf("%s [ %x ]\n", path, md5)
 	}
 	return nil
+}
+
+func ComputeMd5(filePath string) ([]byte, error) {
+  var result []byte
+  file, err := os.Open(filePath)
+  if err != nil {
+    return result, err
+  }
+  defer file.Close()
+
+  hash := md5.New()
+  if _, err := io.Copy(hash, file); err != nil {
+    return result, err
+  }
+
+  return hash.Sum(result), nil
 }
