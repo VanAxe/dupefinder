@@ -16,6 +16,7 @@ var (
 	rec				= app.Flag("recursive", "Search recursively.").Short('r').Bool()
 	output		= app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.log").String()
 	target		= app.Arg("target", "Where to look for duplicate files.").Default(".").String()
+	abs_path,_ = filepath.Abs(*target)
 )
 
 func main() {
@@ -32,37 +33,45 @@ Output:			%s
 Target:			%s
 
 `
-		fmt.Printf(conf, *verbose, *debug, *rec, *output, *target)
+		fmt.Printf(conf, *verbose, *debug, *rec, *output, abs_path)
 	}
 	find_dupes()
 }
 
 func find_dupes() {
 	if *rec == true {
-		err := filepath.Walk(*target, visit)
-		fmt.Printf("filepath.Walk() returned %v\n", err)
+		err := filepath.Walk(abs_path, visit)
+		if err != nil {
+			fmt.Printf("Some error! %v\n", err)
+		} else {
+			if *verbose { fmt.Println("Done!") }
+		}
 	} else {
-		files, err := ioutil.ReadDir(*target)
+		files, err := ioutil.ReadDir(abs_path)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, file := range files {
-			fmt.Println(file.Name())
+			if !file.IsDir() {
+				if *verbose { fmt.Println(abs_path + "/" + file.Name()) }
+			} else {
+				if *verbose { fmt.Printf("%s is a directory\n", abs_path + "/" + file.Name()) }
+			}
 		}
+		if *verbose { fmt.Println("Done!") }
 	}
 }
 
-// func isDir(pth string) (bool, error) {
-// 	fi, err := os.Stat(pth)
-// 	if err != nil {
-// 		return false, err
-// 	}
-
-// 	return fi.Mode.IsDir(), nil
-// }
+func isDirectory(path string) (bool, error) {
+    fileInfo, err := os.Stat(path)
+    return fileInfo.IsDir(), err
+}
 
 func visit(path string, f os.FileInfo, err error) error {
-  fmt.Printf("Visited: %s\n", path)
-  return nil
+	isDir,_ := isDirectory(path)
+	if !isDir && *verbose {
+	  fmt.Printf("%s\n", path)
+	}
+	return nil
 }
