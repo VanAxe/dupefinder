@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
@@ -19,6 +20,7 @@ var (
 	output   = app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.log").String()
 	target   = app.Arg("target", "Where to look for duplicate files.").Default(".").String()
 	abs_path = ""
+	file_map = make(map[string][]byte)
 )
 
 func main() {
@@ -47,7 +49,20 @@ func find_dupes() {
 		if err != nil {
 			fmt.Printf("Some error! %v\n", err)
 		} else {
+			// file_entries := reduce_duplicates(file_map)
+			output_map := reduce_duplicates(file_map)
 			if *verbose {
+				for entry, files := range output_map {
+					string_of_files := ""
+					for ind, file := range files {
+						if ind == 0 {
+							string_of_files = file
+						} else {
+							string_of_files = string_of_files + ", " + file
+						}
+					}
+					fmt.Printf("%s, ", entry, "%s \n", string_of_files)
+				}
 				fmt.Println("Done!")
 			}
 		}
@@ -60,9 +75,9 @@ func find_dupes() {
 		for _, file := range files {
 			if !file.IsDir() {
 				fullpath := abs_path + "/" + file.Name()
-				md5, _ := ComputeMd5(fullpath)
+				md5_hash, _ := ComputeMd5(fullpath)
 				if *verbose {
-					fmt.Printf("%s [ %x ]\n", fullpath, md5)
+					fmt.Printf("%s [ %x ]\n", fullpath, md5_hash)
 				}
 			} else {
 				if *verbose {
@@ -83,9 +98,12 @@ func isDirectory(path string) (bool, error) {
 
 func visit(path string, f os.FileInfo, err error) error {
 	isDir, _ := isDirectory(path)
-	if !isDir && *verbose {
-		md5, _ := ComputeMd5(path)
-		fmt.Printf("%s [ %x ]\n", path, md5)
+	if !isDir {
+		md5_hash, _ := ComputeMd5(path)
+		file_map[path] = md5_hash
+		if *verbose {
+			fmt.Printf("%s [ %x ]\n", path, md5_hash)
+		}
 	}
 	return nil
 }
@@ -104,4 +122,23 @@ func ComputeMd5(filePath string) ([]byte, error) {
 	}
 
 	return hash.Sum(result), nil
+}
+
+// type file_entry struct {
+// 	hash    string
+// 	matches []string
+// }
+
+func reduce_duplicates(input_map map[string][]byte) map[string][]string {
+	output_map := make(map[string][]string)
+	for file_key, md5_hash := range input_map {
+		md5s := hex.EncodeToString(md5_hash)
+		output_map[md5s] = append(output_map[md5s], file_key)
+	}
+	for md5_key, file_array := range output_map {
+		if len(file_array) == 1 {
+			delete(output_map, md5_key)
+		}
+	}
+	return output_map
 }
