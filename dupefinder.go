@@ -27,7 +27,16 @@ func main() {
 	app.Version("0.0.1")
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	abs_path, _ = filepath.Abs(*target)
+	abs_path, err := filepath.Abs(*target)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Nice snafu : fp.Abs needs to check something that exists
+	// gotta separate report_name from report_dest and pass that down...
+	report_dest, err := filepath.Abs(*output)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if *debug == true {
 		conf := `== DEBUG CONF ==
@@ -38,7 +47,7 @@ Output:			%s
 Target:			%s
 
 `
-		fmt.Printf(conf, *verbose, *debug, *rec, *output, abs_path)
+		fmt.Printf(conf, *verbose, *debug, *rec, output, abs_path)
 	}
 	find_dupes()
 }
@@ -49,21 +58,12 @@ func find_dupes() {
 		if err != nil {
 			fmt.Printf("Some error! %v\n", err)
 		} else {
-			// file_entries := reduce_duplicates(file_map)
 			output_map := reduce_duplicates(file_map)
+			csv := pp_csv(output_map)
+			// print to file with []byte(csv)
 			if *verbose {
-				for entry, files := range output_map {
-					string_of_files := ""
-					for ind, file := range files {
-						if ind == 0 {
-							string_of_files = file
-						} else {
-							string_of_files = string_of_files + ", " + file
-						}
-					}
-					fmt.Printf("%s, ", entry, "%s \n", string_of_files)
-				}
-				fmt.Println("Done!")
+				fmt.Printf("%s", csv)
+				// fmt.Println("Done!")
 			}
 		}
 	} else {
@@ -74,20 +74,20 @@ func find_dupes() {
 
 		for _, file := range files {
 			if !file.IsDir() {
-				fullpath := abs_path + "/" + file.Name()
-				md5_hash, _ := ComputeMd5(fullpath)
-				if *verbose {
-					fmt.Printf("%s [ %x ]\n", fullpath, md5_hash)
-				}
+				// fullpath := abs_path + "/" + file.Name()
+				// md5_hash, _ := ComputeMd5(fullpath)
+				// if *verbose {
+				// 	fmt.Printf("%s [ %x ]\n", fullpath, md5_hash)
+				// }
 			} else {
-				if *verbose {
-					fmt.Printf("%s is a directory\n", abs_path+"/"+file.Name())
-				}
+				// if *verbose {
+				// 	fmt.Printf("%s is a directory\n", abs_path+"/"+file.Name())
+				// }
 			}
 		}
-		if *verbose {
-			fmt.Println("Done!")
-		}
+		// if *verbose {
+		// 	fmt.Println("Done!")
+		// }
 	}
 }
 
@@ -101,9 +101,9 @@ func visit(path string, f os.FileInfo, err error) error {
 	if !isDir {
 		md5_hash, _ := ComputeMd5(path)
 		file_map[path] = md5_hash
-		if *verbose {
-			fmt.Printf("%s [ %x ]\n", path, md5_hash)
-		}
+		// if *verbose {
+		// 	fmt.Printf("%s [ %x ]\n", path, md5_hash)
+		// }
 	}
 	return nil
 }
@@ -141,4 +141,17 @@ func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 		}
 	}
 	return output_map
+}
+
+func pp_csv(input_map map[string][]string) string {
+	pretty_csv := ""
+	for entry, files := range input_map {
+		string_of_files := ""
+		for _, file := range files {
+			string_of_files = string_of_files + ", " + file
+		}
+		pretty_csv = pretty_csv + entry + string_of_files + "\n"
+		// fmt.Printf("%s, %s\n ", entry, string_of_files)
+	}
+	return pretty_csv
 }
