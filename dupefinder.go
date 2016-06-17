@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bitbucket.org/alexthekone/dupefinder/libs/format"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -38,17 +39,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *debug == true {
-		conf := `== DEBUG CONF ==
-Verbose:		%t
-Debug:			%t
-Recursive:		%t
-Output:			%s
-Target:			%s
+	ax_format.Pp_debug(conf, *verbose, *debug, *rec, output, abs_path, debug)
 
-`
-		fmt.Printf(conf, *verbose, *debug, *rec, output, abs_path)
-	}
 	find_dupes()
 }
 
@@ -59,7 +51,7 @@ func find_dupes() {
 			fmt.Printf("Some error! %v\n", err)
 		} else {
 			output_map := reduce_duplicates(file_map)
-			csv := pp_csv(output_map)
+			csv := ax.format.Pp_csv(output_map)
 			// print to file with []byte(csv)
 			if *verbose {
 				fmt.Printf("%s", csv)
@@ -141,17 +133,4 @@ func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 		}
 	}
 	return output_map
-}
-
-func pp_csv(input_map map[string][]string) string {
-	pretty_csv := ""
-	for entry, files := range input_map {
-		string_of_files := ""
-		for _, file := range files {
-			string_of_files = string_of_files + ", " + file
-		}
-		pretty_csv = pretty_csv + entry + string_of_files + "\n"
-		// fmt.Printf("%s, %s\n ", entry, string_of_files)
-	}
-	return pretty_csv
 }
