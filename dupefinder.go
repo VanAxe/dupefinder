@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/alexthekone/dupefinder/libs/format"
+	"bitbucket.org/alexthekone/dupefinder/format"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -28,19 +28,16 @@ func main() {
 	app.Version("0.0.1")
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
-	abs_path, err := filepath.Abs(*target)
-	if err != nil {
-		log.Fatal(err)
-	}
+	abs_path, _ = filepath.Abs(*target)
+
 	// Nice snafu : fp.Abs needs to check something that exists
 	// gotta separate report_name from report_dest and pass that down...
-	report_dest, err := filepath.Abs(*output)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// report_dest, err := filepath.Abs(*output)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	ax_format.Pp_debug(conf, *verbose, *debug, *rec, output, abs_path, debug)
-
+	format.Print_debug(*verbose, debug, rec, *output, abs_path)
 	find_dupes()
 }
 
@@ -51,7 +48,7 @@ func find_dupes() {
 			fmt.Printf("Some error! %v\n", err)
 		} else {
 			output_map := reduce_duplicates(file_map)
-			csv := ax.format.Pp_csv(output_map)
+			csv := format.Pp_csv(output_map)
 			// print to file with []byte(csv)
 			if *verbose {
 				fmt.Printf("%s", csv)
