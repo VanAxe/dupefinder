@@ -39,44 +39,20 @@ func main() {
 
 	format.Print_debug(*verbose, debug, rec, *output, abs_path)
 	find_dupes()
+	output_map := reduce_duplicates(file_map)
+	csv := format.Pp_csv(output_map)
+	if *verbose {
+		fmt.Println(csv)
+	}
+	// print to file with []byte(csv)
+
 }
 
 func find_dupes() {
 	if *rec == true {
-		err := filepath.Walk(abs_path, visit)
-		if err != nil {
-			fmt.Printf("Some error! %v\n", err)
-		} else {
-			output_map := reduce_duplicates(file_map)
-			csv := format.Pp_csv(output_map)
-			// print to file with []byte(csv)
-			if *verbose {
-				fmt.Printf("%s", csv)
-				// fmt.Println("Done!")
-			}
-		}
+		find_dupes_rec(abs_path)
 	} else {
-		files, err := ioutil.ReadDir(abs_path)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, file := range files {
-			if !file.IsDir() {
-				// fullpath := abs_path + "/" + file.Name()
-				// md5_hash, _ := ComputeMd5(fullpath)
-				// if *verbose {
-				// 	fmt.Printf("%s [ %x ]\n", fullpath, md5_hash)
-				// }
-			} else {
-				// if *verbose {
-				// 	fmt.Printf("%s is a directory\n", abs_path+"/"+file.Name())
-				// }
-			}
-		}
-		// if *verbose {
-		// 	fmt.Println("Done!")
-		// }
+		find_dupes_flat(abs_path)
 	}
 }
 
@@ -90,9 +66,6 @@ func visit(path string, f os.FileInfo, err error) error {
 	if !isDir {
 		md5_hash, _ := ComputeMd5(path)
 		file_map[path] = md5_hash
-		// if *verbose {
-		// 	fmt.Printf("%s [ %x ]\n", path, md5_hash)
-		// }
 	}
 	return nil
 }
@@ -113,11 +86,6 @@ func ComputeMd5(filePath string) ([]byte, error) {
 	return hash.Sum(result), nil
 }
 
-// type file_entry struct {
-// 	hash    string
-// 	matches []string
-// }
-
 func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 	output_map := make(map[string][]string)
 	for file_key, md5_hash := range input_map {
@@ -130,4 +98,26 @@ func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 		}
 	}
 	return output_map
+}
+
+func find_dupes_rec(abs_path string) {
+	err := filepath.Walk(abs_path, visit)
+	if err != nil {
+		fmt.Printf("Some error! %v\n", err)
+	}
+}
+
+func find_dupes_flat(abs_path string) {
+	files, err := ioutil.ReadDir(abs_path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			fullpath := abs_path + "/" + file.Name()
+			md5_hash, _ := ComputeMd5(fullpath)
+			file_map[fullpath] = md5_hash
+		}
+	}
 }
