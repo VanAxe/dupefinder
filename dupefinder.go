@@ -19,7 +19,7 @@ var (
 	verbose  = app.Flag("verbose", "Enable verbose mode.").Short('v').Bool()
 	debug    = app.Flag("debug", "Enable debug mode.").Short('d').Bool()
 	rec      = app.Flag("recursive", "Search recursively.").Short('r').Bool()
-	output   = app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.log").String()
+	output   = app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.csv").String()
 	target   = app.Arg("target", "Where to look for duplicate files.").Default(".").String()
 	abs_path = ""
 	file_map = make(map[string][]byte)
@@ -31,21 +31,20 @@ func main() {
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	abs_path, _ = filepath.Abs(*target)
 
-	// Nice snafu : fp.Abs needs to check something that exists
-	// gotta separate report_name from report_dest and pass that down...
-	// report_dest, err := filepath.Abs(*output)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	report_dest, report_file := filepath.Split(*output)
+	report_dest, _ = filepath.Abs(report_dest)
 
-	format.Print_debug(*verbose, debug, rec, *output, abs_path)
+	format.Print_debug(*verbose, debug, rec, report_dest, report_file, abs_path)
 	find_dupes()
 	output_map := reduce_duplicates(file_map)
 	csv := format.Pp_csv(output_map)
 	if *verbose {
 		fmt.Println(csv)
 	}
-	// print to file with []byte(csv)
+
+	data := []byte(csv)
+	err := ioutil.WriteFile(report_dest+"/"+report_file, data, 0644)
+	check(err)
 
 }
 
