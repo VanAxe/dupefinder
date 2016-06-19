@@ -26,7 +26,7 @@ var (
 )
 
 func main() {
-	app.Version("0.0.1")
+	app.Version("1.0.0")
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 	abs_path, _ = filepath.Abs(*target)
