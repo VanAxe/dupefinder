@@ -120,6 +120,6 @@ func find_dupes_flat(abs_path string) {
 
 func check(e error) {
 	if e != nil {
-		log.Fatal(err)
+		log.Fatal(e)
 	}
 }
