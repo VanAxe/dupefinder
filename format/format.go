@@ -29,12 +29,13 @@ func Pp_human(input_map map[string][]string) string {
 	return pretty_csv
 }
 
-func Print_debug(verbose bool, debug *bool, rec *bool, output string, abs_path string) {
+func Print_debug(verbose bool, debug *bool, rec *bool, report_dest string, report_file string, abs_path string) {
 	if *debug == true {
 		fmt.Println("== DEBUG CONF ==")
 		fmt.Println("Verbose:\t", verbose)
 		fmt.Println("Debug:\t\t", *debug)
 		fmt.Println("Recursive:\t", *rec)
+		output := report_dest + "/" + report_file
 		fmt.Println("Output:\t\t", output)
 		fmt.Println("Target:\t\t", abs_path, "\n")
 	}
