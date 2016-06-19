@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 var (
@@ -96,6 +97,10 @@ func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 		if len(file_array) == 1 {
 			delete(output_map, md5_key)
 		}
+	}
+	for hash_key, file_refs := range output_map {
+		sort.Strings(file_refs)
+		output_map[hash_key] = file_refs
 	}
 	return output_map
 }
