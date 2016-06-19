@@ -102,16 +102,12 @@ func reduce_duplicates(input_map map[string][]byte) map[string][]string {
 
 func find_dupes_rec(abs_path string) {
 	err := filepath.Walk(abs_path, visit)
-	if err != nil {
-		fmt.Printf("Some error! %v\n", err)
-	}
+	check(err)
 }
 
 func find_dupes_flat(abs_path string) {
 	files, err := ioutil.ReadDir(abs_path)
-	if err != nil {
-		log.Fatal(err)
-	}
+	check(err)
 
 	for _, file := range files {
 		if !file.IsDir() {
@@ -119,5 +115,11 @@ func find_dupes_flat(abs_path string) {
 			md5_hash, _ := ComputeMd5(fullpath)
 			file_map[fullpath] = md5_hash
 		}
+	}
+}
+
+func check(e error) {
+	if e != nil {
+		log.Fatal(err)
 	}
 }
