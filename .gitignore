@@ -28,7 +28,8 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -164,3 +165,9 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Project specific files
+dupefinder.exe
+dupefinder
+dupefinder.log
+dupefinder.csv
