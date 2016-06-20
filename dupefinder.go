@@ -43,8 +43,12 @@ func main() {
 	}
 
 	data := []byte(csv)
-	err := ioutil.WriteFile(report_dest+"/"+report_file, data, 0644)
-	check(err)
+	if len(output_map) > 0 {
+		err := ioutil.WriteFile(report_dest+"/"+report_file, data, 0644)
+		check(err)
+	} else {
+		fmt.Println("No duplicates found.")
+	}
 
 }
 
