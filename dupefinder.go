@@ -16,11 +16,12 @@ import (
 
 var (
 	app      = kingpin.New("dupefinder", "Find duplicate files with checksums.")
-	verbose  = app.Flag("verbose", "Enable verbose mode.").Short('v').Bool()
-	debug    = app.Flag("debug", "Enable debug mode.").Short('d').Bool()
+	excl     = app.Flag("exclude", "Add an exclude regex pattern. May be used multiple times.").Short('e').String()
 	rec      = app.Flag("recursive", "Search recursively.").Short('r').Bool()
 	output   = app.Flag("output", "File to which the report will be written.").Short('o').Default("./dupefinder.csv").String()
 	target   = app.Arg("target", "Where to look for duplicate files.").Default(".").String()
+	debug    = app.Flag("debug", "Enable debug mode.").Short('d').Bool()
+	verbose  = app.Flag("verbose", "Enable verbose mode.").Short('v').Bool()
 	abs_path = ""
 	file_map = make(map[string][]byte)
 )
@@ -126,6 +127,8 @@ func find_dupes_flat(abs_path string) {
 		}
 	}
 }
+
+// Note : ^^^ Refactor the above code so visit() may be used for both contex
 
 func check(e error) {
 	if e != nil {
