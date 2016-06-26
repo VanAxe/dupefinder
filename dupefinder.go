@@ -48,6 +48,7 @@ func main() {
 		check(err)
 	} else {
 		fmt.Println("No duplicates found.")
+		os.Exit(1)
 	}
 
 }
